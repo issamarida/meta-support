@@ -18,6 +18,9 @@ dependencies = [
 # Heavy ML stack. Tests and CI run without it by injecting fake detectors.
 ml = [
   "ultralytics>=8.3",
+  # Needed by Ultralytics' trackers; declared so Ultralytics never pip-installs
+  # it into the environment at runtime.
+  "lap>=0.5.12",
   "torch>=2.4",
   "transformers>=4.44",
   "pillow>=10",
