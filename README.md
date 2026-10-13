@@ -113,6 +113,34 @@ Model weights are downloaded on first use to `~/.cache/safeframe/models`
 (override with `SAFEFRAME_MODEL_DIR`) and the Hugging Face cache; YuNet is
 verified against a pinned SHA-256.
 
+## HTTP API
+
+`uv run safeframe serve` starts the FastAPI server on `127.0.0.1:8000`
+(interactive docs at `/docs`).
+
+| Method & path | Purpose |
+| --- | --- |
+| `GET /api/config` | Limits, defaults, probabilistic-estimation notice and intended-use statement |
+| `POST /api/jobs?filename=…&keep_upload=false` | Upload a video as the raw request body; starts analysis |
+| `GET /api/jobs/{id}` | Job state, stage and progress |
+| `GET /api/jobs/{id}/events` | Server-sent events stream of job progress |
+| `GET /api/jobs/{id}/analysis` | Tracks with per-frame boxes, P(under 18), face-evidence counts |
+| `GET /api/jobs/{id}/preview` | Browser-playable preview (supports range requests) |
+| `GET /api/jobs/{id}/tracks/{track}/thumbnail` | Review thumbnail for one person |
+| `POST /api/jobs/{id}/render` | `{threshold, min_face_samples, overrides, manual_regions}`; starts export |
+| `GET /api/jobs/{id}/download` | The blurred MP4 |
+| `DELETE /api/jobs/{id}` | Cancel and delete everything for the job |
+
+**Data retention.** The original upload, the preview and the thumbnails are
+deleted as soon as the export is ready unless `keep_upload=true`. Every job is
+deleted after 24 h without activity (`SAFEFRAME_JOB_TTL_HOURS`), interrupted
+jobs are deleted on restart, and `DELETE` removes everything immediately. See
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full lifecycle and
+configuration, and [docs/SAFETY.md](docs/SAFETY.md) for the safety case.
+
+SafeFrame has no user accounts and is meant to run locally or on a trusted
+self-hosted machine; put authentication in front of it before exposing it.
+
 ## Limitations
 
 - **Apparent age is not age.** Expect errors around 13–20 in particular.
