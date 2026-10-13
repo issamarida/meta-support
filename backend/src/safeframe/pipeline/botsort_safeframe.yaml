@@ -1,0 +1,19 @@
+# BoT-SORT configuration tuned for SafeFrame.
+# Base: ultralytics/cfg/trackers/botsort.yaml. Changes favour keeping one
+# identity per person through head turns and short occlusions, because a
+# blur decision is attached to the identity.
+
+tracker_type: botsort
+track_high_thresh: 0.25
+track_low_thresh: 0.1
+new_track_thresh: 0.3      # default 0.25: fewer spurious new IDs from weak boxes
+track_buffer: 90           # default 30: keep lost tracks ~3 s (at 30 fps) for re-association
+match_thresh: 0.8
+fuse_score: True
+
+gmc_method: sparseOptFlow  # compensates hand-held / wearable camera motion
+
+proximity_thresh: 0.5
+appearance_thresh: 0.6     # default 0.8: accept re-identification after pose changes
+with_reid: True            # appearance ReID so identities survive occlusion
+model: auto                # reuse detector features: no extra download
