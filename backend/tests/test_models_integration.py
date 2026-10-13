@@ -73,14 +73,18 @@ def test_pipeline_on_real_models(adults_clip, tmp_path):
         adults_clip, bundle.new_tracker(), bundle.new_face_detector(), bundle.age_estimator()
     )
     analysis = result.analysis
-    long_tracks = [t for t in analysis.tracks if len(t.boxes) > 25]
-
-    # Two people, each followed by a single identity for the whole clip.
-    assert len(long_tracks) == 2, [(t.track_id, len(t.boxes)) for t in analysis.tracks]
-    assert all(len(t.boxes) >= 70 for t in long_tracks)
-
     policy = DecisionPolicy()
-    for track in long_tracks:
+    frames = analysis.video.frame_count
+
+    # The two people visible throughout keep a single identity for every frame
+    # (a third, partly visible person may enter as the camera pans).
+    full_length = [t for t in analysis.tracks if len(t.boxes) == frames]
+    assert len(full_length) == 2, [(t.track_id, len(t.boxes)) for t in analysis.tracks]
+
+    # Everyone in the photo is an adult; nobody may be classified as a minor.
+    for track in analysis.tracks:
+        assert policy.classify(track) is not TrackStatus.MINOR, track.track_id
+    for track in full_length:
         assert len(track.samples) >= policy.min_face_samples
         assert track.p_minor is not None and track.p_minor < 0.2
         assert policy.classify(track) is TrackStatus.ADULT
