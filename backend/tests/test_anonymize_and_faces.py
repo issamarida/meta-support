@@ -50,6 +50,21 @@ def test_face_goes_to_smallest_containing_person():
     assert assign_faces([face], [adult, child]) == {2: face}
 
 
+def test_face_of_child_passing_in_front_is_not_given_to_person_behind():
+    # Regression: a smaller box further back used to win on area alone.
+    behind = person(3, 300, 90, 370, 300)
+    child = person(1, 290, 120, 380, 340)
+    face = FaceDetection(Box(318, 122, 352, 156), 0.9)
+    assert assign_faces([face], [behind, child]) == {1: face}
+
+
+def test_ambiguous_face_is_dropped_rather_than_guessed():
+    a = person(1, 100, 100, 200, 400)
+    b = person(2, 102, 101, 202, 401)  # near-identical boxes
+    face = FaceDetection(Box(135, 120, 165, 150), 0.9)
+    assert assign_faces([face], [a, b]) == {}
+
+
 def test_face_in_lower_body_is_ignored():
     p = person(1, 0, 0, 100, 300)
     hand_level = FaceDetection(Box(40, 250, 60, 270), 0.9)

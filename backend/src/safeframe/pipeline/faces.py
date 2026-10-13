@@ -41,31 +41,56 @@ class YuNetFaceDetector:
         return out
 
 
+# Expected head centre, as a fraction of person-box height below its top edge.
+HEAD_Y = 0.12
+# If the two best owners for a face are this close, the face is ambiguous.
+AMBIGUITY_MARGIN = 0.05
+
+
+def _head_distance(face: FaceDetection, person: PersonObservation) -> float:
+    """Distance from the face centre to the person's expected head position,
+    normalised by the person's height (scale-invariant)."""
+    fx, fy = face.box.center
+    hx = (person.box.x1 + person.box.x2) / 2
+    hy = person.box.y1 + HEAD_Y * person.box.height
+    return float(np.hypot(fx - hx, fy - hy)) / max(person.box.height, 1.0)
+
+
 def assign_faces(
     faces: Sequence[FaceDetection],
     people: Sequence[PersonObservation],
     head_fraction: float = 0.5,
 ) -> dict[int, FaceDetection]:
-    """Match each face to at most one tracked person and vice versa.
+    """Match each face to at most one tracked person.
 
-    A face belongs to a person if its centre lies in the top ``head_fraction``
-    of the person box. When boxes overlap (a child held by an adult) the
-    smallest containing box wins, because it is the most specific match.
+    Candidates are people whose box contains the face centre within its top
+    ``head_fraction``. The owner is the candidate whose expected head position
+    is closest to the face. This handles overlaps both ways: a child held in
+    front of an adult, and a child walking past someone further back.
+
+    A face whose two best candidates are nearly tied is dropped. Attributing
+    an adult's face to a child would push that child toward "adult"; dropping
+    the sample only leaves the track closer to UNCERTAIN, which is blurred.
     Each person keeps only their highest-scoring face.
     """
     assigned: dict[int, FaceDetection] = {}
     for face in faces:
         cx, cy = face.box.center
-        candidates = [
-            p
-            for p in people
-            if p.box.contains(cx, cy)
-            and cy <= p.box.y1 + head_fraction * p.box.height
-            and face.box.width <= 1.2 * p.box.width
-        ]
+        candidates = sorted(
+            (
+                (_head_distance(face, p), p)
+                for p in people
+                if p.box.contains(cx, cy)
+                and cy <= p.box.y1 + head_fraction * p.box.height
+                and face.box.width <= 1.2 * p.box.width
+            ),
+            key=lambda c: c[0],
+        )
         if not candidates:
             continue
-        owner = min(candidates, key=lambda p: p.box.area)
+        if len(candidates) > 1 and candidates[1][0] - candidates[0][0] < AMBIGUITY_MARGIN:
+            continue
+        owner = candidates[0][1]
         current = assigned.get(owner.track_id)
         if current is None or face.score > current.score:
             assigned[owner.track_id] = face
