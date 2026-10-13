@@ -49,10 +49,13 @@ Per frame:
    BoT-SORT config: a 3-second track buffer and appearance ReID so identities
    survive occlusion.
 2. Every `age_every` frames, for tracks still collecting evidence:
-   `FaceDetector.detect(frame)` → faces → `assign_faces` matches each face to the
-   *smallest* person box whose top half contains it (so a child held by an adult
-   gets their own face) → square crops → `AgeEstimator.estimate(crops)` in one
-   batch → `AgeSample(p_minor, expected_age, weight)` appended to the track.
+   `FaceDetector.detect(frame)` → faces → `assign_faces` gives each face to the
+   person whose *expected head position* (top-centre of their box) is nearest,
+   among people whose box contains the face in its top half. Faces with two
+   near-equal candidates are dropped rather than guessed, because crediting an
+   adult's face to a child would push the child toward "adult" → square crops →
+   `AgeEstimator.estimate(crops)` in one batch → `AgeSample(p_minor,
+   expected_age, weight)` appended to the track.
 
 After the last frame, samples are aggregated (`policy.aggregate`) and each track
 is smoothed (`smoothing.smooth_track`): gaps ≤ 1.5 s are linearly interpolated,
