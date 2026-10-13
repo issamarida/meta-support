@@ -80,10 +80,28 @@ flowchart LR
 | Metadata stripped from output | Shared videos should not carry home GPS coordinates. |
 | Footage, weights, secrets never committed | Enforced by a pre-commit hook and CI. |
 
-## Quick start (command line)
+## Quick start (web app)
 
-Requirements: Python 3.11+, [uv](https://docs.astral.sh/uv/), FFmpeg. A CUDA GPU
-is used automatically when available.
+Requirements: Python 3.11+, [uv](https://docs.astral.sh/uv/), Node 20+, FFmpeg.
+A CUDA GPU is used automatically when available.
+
+```bash
+make install   # backend (uv, includes PyTorch) + frontend (npm)
+make dev       # API on :8000, UI on http://localhost:5173
+# or, production-style on a single port:
+make serve     # builds the UI and serves it from FastAPI on http://127.0.0.1:8000
+```
+
+1. **Upload** a video. Choose whether to keep the original after export (off by default).
+2. **Watch progress** while people are detected, tracked and age-estimated.
+3. **Review.** Play the video with the blur previewed live in the browser, or
+   switch to the original with colour-coded boxes. Step through flagged
+   segments, adjust the sensitivity slider, set any person to Blur or Keep,
+   and draw extra regions over anyone who was missed.
+4. **Export** and download the MP4. The original, preview and thumbnails are
+   then deleted from the server unless you chose to keep them.
+
+## Quick start (command line)
 
 ```bash
 cd backend
@@ -166,8 +184,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the branching model, commit
 conventions and data-handling rules.
 
 ```bash
-cd backend && uv run pytest        # fast suite: synthetic video, no model downloads
-cd backend && uv run pytest -m models   # real-model smoke test
+make test          # backend (synthetic video, no model downloads) + frontend suites
+make test-models   # real-model smoke test (downloads YOLO, YuNet, ViT)
+make lint
 ```
 
 ## License
