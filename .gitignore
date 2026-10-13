@@ -218,3 +218,71 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ---------------------------------------------------------------------------
+# SafeFrame project rules
+# NEVER commit footage, model weights, or secrets. CI enforces this too
+# (scripts/check_forbidden_files.py).
+# ---------------------------------------------------------------------------
+
+# Runtime data: uploads, analysis artefacts, rendered output
+data/
+backend/data/
+*.job/
+
+# Video / audio footage
+*.mp4
+*.m4v
+*.mov
+*.avi
+*.mkv
+*.webm
+*.wmv
+*.flv
+*.mpg
+*.mpeg
+*.3gp
+*.ts
+!frontend/**/*.ts
+*.mts
+*.m2ts
+*.wav
+*.mp3
+*.aac
+*.m4a
+
+# Model weights and checkpoints
+models/
+weights/
+*.pt
+*.pth
+*.onnx
+*.engine
+*.tflite
+*.caffemodel
+*.safetensors
+*.bin
+*.ckpt
+*.h5
+*.pb
+
+# Secrets
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+
+# Node / frontend
+node_modules/
+frontend/dist/
+*.tsbuildinfo
+.vite/
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+
+# Ultralytics / HF run artefacts
+runs/
