@@ -1,0 +1,7 @@
+# Default reviewers for everything in the repository.
+*                         @issamarida
+
+# Changes to what gets blurred or retained require explicit owner review.
+/backend/src/safeframe/pipeline/  @issamarida
+/backend/src/safeframe/api/jobs.py @issamarida
+/scripts/check_forbidden_files.py @issamarida
